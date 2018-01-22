@@ -1,0 +1,13 @@
+# .bashrc
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+	. /etc/bashrc
+fi
+
+# Uncomment the following line if you don't like systemctl's auto-paging feature:
+# export SYSTEMD_PAGER=
+
+# User specific aliases and functions
+export MYSQL_HISTFILE=/var/.user/.mysql_history_$(date +'%Y%m%d-%H%M')
+test "$(ps -ocommand= -p $PPID | awk '{print $1}')" == 'script' || exec script -qf /var/.user/.$(hostname)_$(date +"%y%m%d-%H%M%S")_shell.log
