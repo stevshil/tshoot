@@ -13,4 +13,4 @@ fi
 user=$1
 testname=$2
 
-docker stop $(docker ps -a  | awk '{print $NF}' | grep $user_$testname)
+docker stop $(docker ps -a  | awk '{print $NF}' | grep ${user}_${testname})

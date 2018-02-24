@@ -14,4 +14,4 @@ user=$1
 testname=$2
 
 # Destroy all the containers for the test - will delete everything
-docker rm -f $(docker ps -a  | awk '{print $NF}' | grep $user_$testname)
+docker rm -f $(docker ps -a  | awk '{print $NF}' | grep ${user}_${testname})

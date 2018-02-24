@@ -3,6 +3,8 @@ MAINTAINER Steve Shilling steve@therapypages.com
 RUN yum -y update
 # Install useful tools
 RUN yum -y install wget openssh-server net-tools nmap telnet mysql file sudo nano
+# Install tools for students
+Run yum -y install less nc curl
 # Install Oracle Java for the app
 RUN wget -nv 'https://www.dropbox.com/s/lqqp8zjc1ibmk8e/jdk-8u131-linux-x64.rpm?dl=0' -O /tmp/jdk-8u131-linux-x64.rpm
 RUN wget 'https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.42.tar.gz' -O /tmp/mysql-connector-java-5.1.42.tar.gz
