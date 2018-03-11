@@ -10,6 +10,9 @@ On the student side it will show progress of their work, e.g. started, submitted
 
 The launching and admin is performed through the Web UI which communicates with the Docker backend to start containers which will have port forwarding configured for the students.  The ports for SSH and Web will appear in the web UI for the student to enable connection.
 
+**IMPORTANT**
+All commands to start the test must be ran from the **os** directory.
+
 ## Web front end
 
 Written in PHP passing docker commands to the backend.
@@ -25,7 +28,7 @@ The VM will act like the final server that the software would be installed on
 
 ## Useful files
 
-The student will only be able to log on to the application server.
+The student will only be able to log on to the application server and perform all the necessary work from their so that the commands and output are logged.
 
 From this server we need to capture all Linux commands (use script) and all MySQL commands which can be obtained from the .mysql_history file in the users home directory.
 
@@ -33,41 +36,70 @@ To capture the users commands we will launch the script program through exec, so
 
 ## Captures
 
-On completion the files are stored on the main server in /var/testresults with a directory under there based on the users name and the test.  The result is stored in a file with the number of times they ran the *completed* script (can only be run using sudo) as well as the logs for the mysql commands and shell commands with output for both.  These are hidden files and are located in /var/.user on the container while running and copied to the /var/testresults directory as a log directory when the completed script is run.
+On completion the files are stored on the main server in /var/testresults with a directory under there based on the users name and the test.  The result is stored in a file with the number of times they ran the **completed** script (can only be run using sudo) as well as the logs for the mysql commands and shell commands with output for both.  These are hidden files and are located in /var/.user on the container while running and copied to the /var/testresults directory as a log directory when the completed script is run.
+
+The student runs the **completed** command as;
+```
+sudo completed
+```
+
+The contents of the /var/testresults directory on the actual server will contain;
+
+```
+<username>.test<testNumber>/
+|
+|- testcount
+|- log
+  |- username.test<testNumber>_<YYMMDD>-<HHMMSS>_shell.log
+  |- mysql_history_<YYYYMMDD>-<HHMM>
+```
+
+The **testcount** file contains the number of attempts the user has ran the **completed** command, and if completed successfully the word **completed**.  The files are only copied once the test is completed.
+
+The log directory contains transcripts of the commands and output that the student has used.
 
 # Running the demo system
 
 To run this system in a self-contained VirtualBox VM simply do the following in the directory where you see the Vagrantfile;
 
-```vagrant up tshoot```
+```
+vagrant up tshoot
+```
 
 This will create the test environment on a Linux RHEL (CentOS 7) VM and pull down all the necessary Docker images and build the application container.
 
-All images will be saved to a local Docker registry which the VM can call through localhost:5000.  If you destroy the VM these images will still be located on your local disk in the *registry* directory.
+All images will be saved to a local Docker registry which the VM can call through localhost:5000.  If you destroy the VM these images will still be located on your local disk in the **registry** directory.
 
 Once Vagrant has finished building the VM you can then log on to the VM to start a test;
 
-```vagrant ssh tshoot```
+```
+vagrant ssh tshoot
+```
 
 ## Starting a test
+
+The system has been set with a default os/tshoot.conf which will need to be modified when installing on to a real server.  This file should contain the network interface name of the NIC that the students will be able to SSH to.
 
 To start the test;
 
 ```
 cd /vagrant
-os/start_test steve test1 enp0s8
+os/startTest steve 1
 ```
 
 Where;
 * steve
   - Is the username that will be taking the test
-* test1
+* 1
   - The test to take which is also the name of the Docker image
+  - 0 is the working demonstration system
 * enp0s8
   - The real network interface of the system (for VirtualBox this is enp0s8)
   - This is the interface that can be used to ssh to the real server, but the students will be given the port number to use
 
 The username and test name are used by the other scripts to identify which set of Docker containers to manage.
+
+The output of the script is as follows;
 
 ## Performing the test
 
@@ -77,7 +109,24 @@ On completion of the starting of the test the relevant port numbers and IP addre
 ssh -p 1030 student@192.168.1.32
 ```
 
-The student password for the container is *secret*.
+The student password for the container is **secret**.
+
+During the test the student can control the trade-app service using;
+
+```
+sudo service trade-app start
+sudo service trade-app stop
+sudo service trade-app restart
+```
+
+They can also use the **mysql** command to connect to the mysql server at address mysql.server, e.g.;
+```
+mysql -h mysql.server -u trades -ptrades trades
+```
+Or as root
+```
+mysql -h mysql.server -u root -pmy-secret-pw
+```
 
 ## Completing the test
 
@@ -93,35 +142,44 @@ The command will tell them if they have completed the test, or if they need to c
 
 The test can be suspended using;
 
-```/vagrant/os/stop_test steve test1```
+```
+/vagrant/os/stop_test steve test1
+```
 
 ## Resuming the test
 
 A test can be resumed at any time with;
 
-```/vagrant/os/resume_test steve test1```
+```
+/vagrant/os/resume_test steve test1
+```
 
 ## Destroying the test
 
 Once a test is complete it no longer needs to remain on the system and can be destroyed;
 
-```/vagrant/os/destroy_test steve test1```
-
+```
+/vagrant/os/destroy_test steve test1
+```
 
 # Obtaining the test results
 
-On the Vagrant VM (```vagrant ssh tshoot```) you will be able to see any tests that have been taken.
+On the Vagrant VM;
+```
+vagrant ssh tshoot
+```
+You will be able to see any tests that have been taken.
 
 The /var/testresults directory should be used to find any data on the test the user has taken.
 
 The format of the directory is;
 
-*username*.*test*
+**username**.**test**
 
 In that directory the following are created;
 * testcount
-  - Contains the number of times the user has ran the *completed* script to check their result
+  - Contains the number of times the user has ran the **completed** script to check their result
   - Contains the work Completed when the user has finished the test
 * logs
   - This directory contains hidden files of;
-    .*hostname*_*yyymmdd-HMS*_shell.log
+    .**hostname**_**yyymmdd-HHMMSS**_shell.log

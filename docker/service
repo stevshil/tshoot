@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Wrapper around start/stop
+# Docker does not have a service command
+
+if (( $# < 2 ))
+then
+	echo "SYNTAX: service <serviceName> [start|stop|status|restart]"
+	exit 1
+fi
+
+export VERSION=$(cat /opt/trade-app/version)
+
+case $2 in
+	'start')
+		/opt/trade-app/bin/trade-app.sh &
+		sleep 10
+		/opt/trade-app/bin/injector.sh &
+		;;
+	'stop')
+		kill $(ps -ef | grep java | grep -v grep | awk '{print $2}')
+		;;
+	'status')
+		if (( $(ps -ef | grep java | grep -v grep | wc -l) > 0 ))
+		then
+			echo "Application is running"
+		fi
+		;;
+	'restart')
+		kill $(ps -ef | grep java | grep -v grep | awk '{print $2}')
+		sleep 2
+		/opt/trade-app/bin/trade-app.sh &
+		sleep 10
+		/opt/trade-app/bin/injector.sh &
+		;;
+esac

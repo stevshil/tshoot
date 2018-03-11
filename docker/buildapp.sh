@@ -2,7 +2,7 @@
 
 case $1 in
 	'web')
-		if ! docker build -f webapp.Dockerfile -t citi/test1 .
+		if ! docker build -f webapp.Dockerfile -t citi/test .
 		then
 			echo "Failed to build test image"
 			exit 1

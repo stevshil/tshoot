@@ -34,6 +34,12 @@ then
   echo "Completed" >>/var/log/$(hostname)/testcount
   cp -r /var/log/$(hostname) /var/testresults
   cp -r /var/.user /var/testresults/$(hostname)/log
+  cd /var/testresults/$(hostname)/log
+  for x in .[!.]*
+  do
+    newname=$(echo "$x" | sed 's/^.//')
+    mv "$x" "$newname"
+  done
   exit 0
 else
   echo "The problem still exists"

@@ -1,1 +1,3 @@
 student ALL=(ALL) NOPASSWD: /bin/completed
+student ALL=(ALL) NOPASSWD: /usr/sbin/service trade-app start
+student ALL=(ALL) NOPASSWD: /usr/sbin/service trade-app stop

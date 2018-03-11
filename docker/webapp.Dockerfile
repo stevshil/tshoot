@@ -13,6 +13,8 @@ RUN yum -y install /tmp/jdk-8u131-linux-x64.rpm
 COPY tradeapp.tgz /tmp/tradeapp.tgz
 COPY start.sh /opt
 RUN chmod +x /opt/start.sh
+COPY service /usr/sbin/service
+RUN chmod +x /usr/sbin/service
 RUN cd /opt && mkdir trade-app && cd trade-app && tar zxvf /tmp/tradeapp.tgz
 COPY application-injector.properties /opt/trade-app/target/application-injector.properties
 COPY application.properties /opt/trade-app/target/application.properties
@@ -30,11 +32,14 @@ RUN useradd -m -s /bin/bash student
 RUN mkdir /var/.user && chown student:student /var/.user
 RUN (sleep 2; echo secret; sleep 2; echo secret) | passwd student
 COPY sshd_config /etc/ssh/sshd_config
-COPY bashrc /home/student/.bashrc
+#COPY bashrc /home/student/.bashrc
+COPY bashrc /etc/bashrc
 COPY completed /bin/completed
 RUN chown root:root /bin/completed && chmod 700 /bin/completed
 RUN chown student:student /home/student/.bashrc
 COPY student_sudoers /etc/sudoers.d/student
 RUN chown root:root /etc/sudoers.d/student && chmod 600 /etc/sudoers.d/student
+COPY trade-app.sh /opt/trade-app/bin
+COPY injector.sh /opt/trade-app/bin
 WORKDIR /opt/trade-app
 ENTRYPOINT ["/opt/start.sh"]
