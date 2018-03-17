@@ -1,5 +1,8 @@
-FROM centos:7.2.1511
+#FROM centos:7.2.1511
+FROM centos:7.4.1708
 MAINTAINER Steve Shilling steve@therapypages.com
+#RUN yum -y install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-7.noarch.rpm
+#RUN yum -y install epel-release
 RUN yum -y update
 # Install useful tools
 RUN yum -y install wget openssh-server net-tools nmap telnet mysql file sudo nano

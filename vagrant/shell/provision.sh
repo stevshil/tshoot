@@ -4,10 +4,23 @@
 
 # Install Docker dependencies and Docker
 yum -y install yum-utils device-mapper-persistent-data lvm2
-yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-yum -y install docker-ce mysql nc
-systemctl enable docker
-systemctl start docker
+if grep 6.9 /etc/redhat-release >/dev/null 2>&1
+then
+	rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+	yum -y install http://www.elrepo.org/elrepo-release-6-8.el6.elrepo.noarch.rpm
+	yum -y --enablerepo=elrepo-kernel install kernel-lt
+	yum -y install http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+	yum -y install docker-io
+	chkconfig docker on
+	service docker start
+else
+	yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+	yum -y install docker-ce mysql nc
+	systemctl enable docker
+	systemctl start docker
+fi
+
+yum -y install mysql nc
 
 # Make the test results directory
 if ! [[ -d /var/testresults ]]
@@ -15,17 +28,18 @@ then
   mkdir /var/testresults
 fi
 
-# Check if Docker Registry is already running
-if ! docker ps | grep dockreg >/dev/null 2>&1
+if [[ -d /var/testresults ]]
 then
-  # Add the vagrant user to Docker group
-  if ! grep docker /etc/group | grep vagrant >/dev/null 2>&1
-  then
-    sed -i 's/^\(docker:x:.*\)/\1vagrant/' /etc/group
-  else
-    echo "Failed to add vagrant to docker group"
-    exit 1
-  fi
+  chmod 755 /var/testresults
+fi
+
+# Add the vagrant user to Docker group
+if ! grep docker /etc/group | grep vagrant >/dev/null 2>&1
+then
+  sed -i 's/^\(docker:x:.*\)/\1vagrant/' /etc/group
+else
+  echo "Failed to add vagrant to docker group"
+  exit 1
 fi
 
 # Add the Docker registry server for where the Docker images will live
@@ -41,10 +55,14 @@ then
   ln -s /vagrant/registry /var/lib/registry
 fi
 
-if ! docker run -itd -p5000:5000 --restart always --name dockreg -v /var/lib/registry:/var/lib/registry registry:2
+# Check if docker reg is already running
+if ! docker ps | grep dockreg >/dev/null 2>&1
 then
-  echo "Failed to start docker registry server"
-  exit 2
+	if ! docker run -itd -p 5000:5000 --restart always --name dockreg -v /var/lib/registry:/var/lib/registry registry:2
+	then
+	  echo "Failed to start docker registry server"
+	  exit 2
+	fi
 fi
 
 # Download mysql and activemq containers and add to local repo

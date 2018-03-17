@@ -9,5 +9,7 @@ Vagrant.configure("2") do | config |
     tshoot.vm.provision "shell", path: "vagrant/shell/provision.sh"
     tshoot.vm.network "public_network"
   end
-  config.vm.box="bento/centos-7.2"
+  #config.vm.box="bento/centos-7.2"
+  #config.vm.box="bento/centos-6.9"
+  config.vm.box="bento/centos-7.4"
 end
