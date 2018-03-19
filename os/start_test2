@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Created by: Steve Shilling
-# Created Date: 11th Jan 2018
+# Created Date: 17th March 2018
 
 # Script to start a docker image for a student
-# It requires the student name, the name of the test which should also be the docker image name and the servers Network interface
+# Script deals with Scenario 2 - App already on port 8080
 
 if (( $# < 3 ))
 then
@@ -61,10 +61,6 @@ sqlcmd=$(find . -name sqlschema.sh)
 sleep 10
 ${sqlcmd} ${localsql}
 
-# Set the test by changing trades password to something else
-randompw=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-mysql --host=${SSHIP} --port=${localsql} --user=root --password=my-secret-pw -e "SET PASSWORD FOR 'trades'@'%' = PASSWORD('$randompw')"
-
 # Run ActiveMQ
 docker run --name=${user}_${testcase}_activemq -d \
                 -e 'ACTIVEMQ_REMOVE_DEFAULT_ACCOUNT=true' \
@@ -76,6 +72,14 @@ docker run --name=${user}_${testcase}_activemq -d \
 
 # Run the app server
 docker run -itd -h ${user}.${testcase} -e APPVERSION=1.0.0 -v /var/testresults:/var/testresults --name ${user}_${testcase} -p ${web2}:8080 -p ${web}:80 -p ${ssh}:22 --link ${user}_${testcase}_mysql:mysql.server --link ${user}_${testcase}_activemq:activemq.server localhost:5000/citi/test >/dev/null
+
+# Stop trade app running
+docker cp ../docker/stopTrade ${user}_${testcase}:/usr/sbin/web-app
+docker cp ../docker/completed2 ${user}_${testcase}:/bin/completed
+docker exec -t ${user}_${testcase} chmod +x /usr/sbin/web-app
+docker exec -t ${user}_${testcase} chmod +x /bin/completed
+docker exec -t ${user}_${testcase} /usr/sbin/web-app
+docker exec -di ${user}_${testcase} bash -c '/usr/bin/nohup /usr/bin/nc -kl 8080 &'
 
 echo "Using the following ports;"
 echo "SSH = ${ssh}"

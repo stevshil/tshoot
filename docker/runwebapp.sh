@@ -1,9 +1,9 @@
 #!/bin/bash
 
 cd /opt/trade-app
-find /opt/trade-app -name trade-record.log -exec rm -f {} \;
+# find /opt/trade-app -name trade-record.log -exec rm -f {} \;
 # rm /opt/trade-app/trade-record.log
-ln -s /var/log/trade-app/trade-record.log /opt/trade-app/trade-record.log
+# ln -s /var/log/trade-app/trade-record.log /opt/trade-app/trade-record.log
 export VERSION=$APPVERSION
 
 # Remove the install files

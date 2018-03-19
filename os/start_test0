@@ -57,7 +57,7 @@ SSHIP=$(ifconfig | sed -n "/${nic}/,/RX/p" | grep inet | egrep -o '\b([0-9]{1,3}
 
 # Run MySQL
 # docker run --name ${user}_${testcase}_mysql -p ${localsql}:3306 -p ${sql}:22 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:5.6
-docker run --name ${user}_${testcase}_mysql -p ${localsql}:3306 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d localhost:5000/mysql
+docker run --name ${user}_${testcase}_mysql -p ${localsql}:3306 -e MYSQL_ROOT_PASSWORD=my-secret-pw -d localhost:5000/mysql >/dev/null
 sqlcmd=$(find . -name sqlschema.sh)
 sleep 10
 ${sqlcmd} ${localsql}
@@ -68,11 +68,11 @@ docker run --name=${user}_${testcase}_activemq -d \
                 -e 'ACTIVEMQ_ADMIN_LOGIN=admin' -e 'ACTIVEMQ_ADMIN_PASSWORD=admin' \
                 -e 'ACTIVEMQ_MIN_MEMORY=1024' -e  'ACTIVEMQ_MAX_MEMORY=4096' \
 								-p ${amqadmin}:8161\
-								localhost:5000/activemq
+								localhost:5000/activemq >/dev/null
 #                webcenter/activemq:5.14.3
 
 # Run the app server
-docker run -itd -h ${user}.${testcase} -e APPVERSION=1.0.0 -v /var/testresults:/var/testresults --name ${user}_${testcase} -p ${web2}:8080 -p ${web}:80 -p ${ssh}:22 --link ${user}_${testcase}_mysql:mysql.server --link ${user}_${testcase}_activemq:activemq.server localhost:5000/citi/test
+docker run -itd -h ${user}.${testcase} -e APPVERSION=1.0.0 -v /var/testresults:/var/testresults --name ${user}_${testcase} -p ${web2}:8080 -p ${web}:80 -p ${ssh}:22 --link ${user}_${testcase}_mysql:mysql.server --link ${user}_${testcase}_activemq:activemq.server localhost:5000/citi/test >/dev/null
 
 echo "Using the following ports;"
 echo "SSH = ${ssh}"

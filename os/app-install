@@ -45,7 +45,8 @@ then
   sed -i 's/^\(docker:x:.*\)/\1vagrant/' /etc/group
 else
   echo "Failed to add vagrant to docker group"
-  exit 1
+	echo "User may already be a member"
+  #exit 1
 fi
 
 

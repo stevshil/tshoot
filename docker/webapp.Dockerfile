@@ -44,5 +44,8 @@ COPY student_sudoers /etc/sudoers.d/student
 RUN chown root:root /etc/sudoers.d/student && chmod 600 /etc/sudoers.d/student
 COPY trade-app.sh /opt/trade-app/bin
 COPY injector.sh /opt/trade-app/bin
+RUN chown -R student:student /opt/trade-app
+RUN mkdir /var/log/trade-app
+RUN chown -R student:student /var/log/trade-app
 WORKDIR /opt/trade-app
 ENTRYPOINT ["/opt/start.sh"]

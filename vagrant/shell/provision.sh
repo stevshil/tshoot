@@ -39,7 +39,8 @@ then
   sed -i 's/^\(docker:x:.*\)/\1vagrant/' /etc/group
 else
   echo "Failed to add vagrant to docker group"
-  exit 1
+	echo "Check /etc/group and ensure vagrant is in the docker group"
+  #exit 1
 fi
 
 # Add the Docker registry server for where the Docker images will live

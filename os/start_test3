@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Created by: Steve Shilling
-# Created Date: 11th Jan 2018
+# Created Date: 17th March 2018
 
 # Script to start a docker image for a student
-# It requires the student name, the name of the test which should also be the docker image name and the servers Network interface
+# Script deals with Scenario 3 - In ability to write to logs, directory and files readonly
 
 if (( $# < 3 ))
 then
@@ -61,10 +61,6 @@ sqlcmd=$(find . -name sqlschema.sh)
 sleep 10
 ${sqlcmd} ${localsql}
 
-# Set the test by changing trades password to something else
-randompw=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-mysql --host=${SSHIP} --port=${localsql} --user=root --password=my-secret-pw -e "SET PASSWORD FOR 'trades'@'%' = PASSWORD('$randompw')"
-
 # Run ActiveMQ
 docker run --name=${user}_${testcase}_activemq -d \
                 -e 'ACTIVEMQ_REMOVE_DEFAULT_ACCOUNT=true' \
@@ -76,6 +72,14 @@ docker run --name=${user}_${testcase}_activemq -d \
 
 # Run the app server
 docker run -itd -h ${user}.${testcase} -e APPVERSION=1.0.0 -v /var/testresults:/var/testresults --name ${user}_${testcase} -p ${web2}:8080 -p ${web}:80 -p ${ssh}:22 --link ${user}_${testcase}_mysql:mysql.server --link ${user}_${testcase}_activemq:activemq.server localhost:5000/citi/test >/dev/null
+
+# Stop trade app running
+docker exec -it ${user}_${testcase} mkdir /var/log/trade-app >/dev/null 2>&1
+docker exec -it ${user}_${testcase} touch /var/log/trade-app/server.stdout /var/log/trade-app/server.stderr /var/log/trade-app/injector.stdout /var/log/trade-app/injector.stderr
+docker exec -it ${user}_${testcase} chmod 507 /var/log/trade-app
+docker exec -it ${user}_${testcase} bash -c 'chmod 004 /var/log/trade-app/*'
+docker exec -it ${user}_${testcase} bash -c '/usr/sbin/service trade-app stop 2>/dev/null'
+docker exec -it ${user}_${testcase} bash -c '/usr/sbin/service trade-app start 2>/dev/null'
 
 echo "Using the following ports;"
 echo "SSH = ${ssh}"

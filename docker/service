@@ -13,12 +13,12 @@ export VERSION=$(cat /opt/trade-app/version)
 
 case $2 in
 	'start')
-		/opt/trade-app/bin/trade-app.sh &
+		runuser -u student /opt/trade-app/bin/trade-app.sh &
 		sleep 10
-		/opt/trade-app/bin/injector.sh &
+		runuser -u student /opt/trade-app/bin/injector.sh &
 		;;
 	'stop')
-		kill $(ps -ef | grep java | grep -v grep | awk '{print $2}')
+		kill $(ps -ef | grep java | grep -v grep | awk '{print $2}') 2>/dev/null	
 		;;
 	'status')
 		if (( $(ps -ef | grep java | grep -v grep | wc -l) > 0 ))
@@ -27,10 +27,10 @@ case $2 in
 		fi
 		;;
 	'restart')
-		kill $(ps -ef | grep java | grep -v grep | awk '{print $2}')
+		kill $(ps -ef | grep java | grep -v grep | awk '{print $2}') 2>/dev/null
 		sleep 2
-		/opt/trade-app/bin/trade-app.sh &
+		runuser -u student /opt/trade-app/bin/trade-app.sh &
 		sleep 10
-		/opt/trade-app/bin/injector.sh &
+		runuser -u student /opt/trade-app/bin/injector.sh &
 		;;
 esac
