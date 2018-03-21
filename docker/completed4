@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# Script that has to run as root via sudo for student so they can't see what is marked
+# Created by: Steve Shilling
+# Date: 21 March 2018
+
+# Test 4 - Duplicate trades
+if grep Completed /var/log/$(hostname)/testcount 2>/dev/null
+then
+  echo "You have already completed this test"
+  exit 0
+fi
+
+if [[ -e /var/log/$(hostname)/testcount ]]
+then
+  testcount=$(cat /var/log/$(hostname)/testcount)
+else
+  if [[ ! -d /var/log/$(hostname) ]]
+  then
+    mkdir -p /var/log/$(hostname)
+    chown root:root /var/log/$(hostname)
+  fi
+  testcount=0
+fi
+
+((testcount=testcount + 1))
+echo $testcount >/var/log/$(hostname)/testcount
+chmod 600 /var/log/$(hostname)/testcount
+chown root:root /var/log/$(hostname)/testcount
+
+# Check that watcher is no longer running
+failed=0
+if ! ps -ef | grep -v grep | grep watcher >/dev/null 2>&1
+then
+  # Check that the Indexes are added
+  transid=$(mysql -h mysql.server -u trades -ptrades trades -e "select TABLE_SCHEMA,TABLE_NAME,INDEX_NAME,COLUMN_NAME FROM information_schema.statistics WHERE TABLE_SCHEMA='trades' AND TABLE_NAME='Trades' AND COLUMN_NAME='transid';")
+  stock=$(mysql -h mysql.server -u trades -ptrades trades -e "select TABLE_SCHEMA,TABLE_NAME,INDEX_NAME,COLUMN_NAME from information_schema.statistics WHERE TABLE_SCHEMA='trades' AND TABLE_NAME='Trades' AND COLUMN_NAME='stock';")
+  if [[ -z $transid ]]
+  then
+    failed=1
+  fi
+  if [[ -z $stock ]]
+  then
+    failed=1
+  fi
+  dupTrades=$(mysql -h mysql.server -u trades -ptrades trades -e "select Trades.transid from Trades  INNER JOIN (SELECT Trades.transid FROM Trades GROUP BY Trades.transid HAVING count(Trades.transid) > 1) dup ON Trades.transid = dup.transid;")
+  if [[ -n $dupTrades ]]
+  then
+    failed=1
+  fi
+  if (( failed == 0 ))
+  then
+    echo "Congratulations you have solved the problem"
+    echo "Completed" >>/var/log/$(hostname)/testcount
+    cp -r /var/log/$(hostname) /var/testresults
+    cp -r /var/.user /var/testresults/$(hostname)/log
+    cd /var/testresults/$(hostname)/log
+    for x in .[!.]*
+    do
+      newname=$(echo "$x" | sed 's/^.//')
+      mv "$x" "$newname"
+    done
+    exit 0
+  else
+    echo "The problem still exists"
+    exit 1
+  fi
+else
+  echo "The problem still exists"
+  exit 1
+fi

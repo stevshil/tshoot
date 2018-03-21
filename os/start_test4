@@ -75,29 +75,11 @@ docker run -itd -h ${user}.${testcase} -e APPVERSION=1.0.0 -v /var/testresults:/
 
 # Stop trade app running
 docker cp ../docker/completed4 ${user}_${testcase}:/bin/completed
+docker cp dupTrade.sh ${user}_${testcase}:/bin/watcher
 docker exec -t ${user}_${testcase} chmod 700 /bin/completed
 docker exec -t ${user}_${testcase} chown root:root /bin/completed
-docker exec -t ${user}_${testcase} mysql -vvv -h mysql.server -u trades -ptrades trades -e 'SET FOREIGN_KEY_CHECKS=0;
-DROP INDEX transid ON Trades;
-DROP INDEX stock ON Trades;
--- ALTER TABLE Trades DROP PRIMARY KEY;
-DELIMITER $$
-CREATE TRIGGER dupTrade BEFORE INSERT ON Trades
-FOR EACH ROW
-BEGIN
-SET FOREIGN_KEY_CHECKS=0;
-#set @maxid=(select max(id) from Trades);
-IF (NEW.id IS NOT NULL)
-THEN
-	SET
-	CREATE TEMPORARY TABLE tmpTrades SELECT * FROM Trades WHERE id=NEW.id;
-	INSERT INTO Trades (transid,stock,ptime,price,volume,buysell,state,stime)
-	SELECT transid,stock,ptime,price,volume,buysell,state,stime FROM tmpTrades;
-	DROP TEMPORARY TABLE tmpTrades;
-END IF;
-SET FOREIGN_KEY_CHECKS=1;
-END $$
-'
+docker exec -t ${user}_${testcase} chmod 755 /bin/watcher
+docker exec -t ${user}_${testcase} bash -c 'nohup /bin/watcher'
 
 echo "Using the following ports;"
 echo "SSH = ${ssh}"
