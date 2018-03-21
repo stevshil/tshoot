@@ -60,7 +60,7 @@ fi
 if ! docker ps | grep dockreg >/dev/null 2>&1
 then
   # Start the Docker registry
-  if ! docker run -itd -p 5000:5000 --restart always --name dockreg -v /var/lib/registry:/var/lib/registry registry:2
+  if ! docker run -itd -p 5000:5000 --restart always --name dockreg -v /var/lib/registry:/var/lib/registry steve353/registry:2
   then
     echo "Failed to start docker registry server"
     exit 2
@@ -72,34 +72,34 @@ fi
 # Check if we have our own local one first
 if ! docker images | grep localhost:5000/mysql >/dev/null 2>&1
 then
-  if ! docker pull mysql:5.6
+  if ! docker pull steve353/mysql:5.6
   then
     echo "Failed to get MySQL 5.6 image from Docker Hub"
     exit 3
   fi
-  docker tag mysql:5.6 localhost:5000/mysql
+  docker tag steve353/mysql:5.6 localhost:5000/mysql
   if ! docker push localhost:5000/mysql
   then
     echo "Failed to push our own copy of MySQL to local registry"
     exit 5
   fi
-  docker rmi mysql:5.6
+  docker rmi steve353/mysql:5.6
 fi
 
 if ! docker images | grep localhost:5000/activemq >/dev/null 2>&1
 then
-  if ! docker pull webcenter/activemq:5.14.3
+  if ! docker pull steve353/activemq:5.14.3
   then
     echo "Failed to get ActiveMQ 5.14.3 from Docker Hub"
     exit 4
   fi
-  docker tag webcenter/activemq:5.14.3 localhost:5000/activemq
+  docker tag steve353/activemq:5.14.3 localhost:5000/activemq
   if ! docker push localhost:5000/activemq
   then
     echo "Failed to push our own copy of ActiveMQ to local registry"
     exit 6
   fi
-  docker rmi webcenter/activemq:5.14.3
+  docker rmi steve353/activemq:5.14.3
 fi
 
 OLDDIR="$PWD"

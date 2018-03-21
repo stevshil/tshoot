@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Created by: Steve Shilling
-# Created Date: 17th March 2018
+# Created Date: 20th March 2018
 
 # Script to start a docker image for a student
-# Script deals with Scenario 3 - In ability to write to logs, directory and files readonly
+# Script deals with Scenario 4 - Duplicate trades
 
 if (( $# < 3 ))
 then
@@ -74,15 +74,30 @@ docker run --name=${user}_${testcase}_activemq -d \
 docker run -itd -h ${user}.${testcase} -e APPVERSION=1.0.0 -v /var/testresults:/var/testresults --name ${user}_${testcase} -p ${web2}:8080 -p ${web}:80 -p ${ssh}:22 --link ${user}_${testcase}_mysql:mysql.server --link ${user}_${testcase}_activemq:activemq.server localhost:5000/citi/test >/dev/null
 
 # Stop trade app running
-docker cp ../docker/completed3 ${user}_${testcase}:/bin/completed
+docker cp ../docker/completed4 ${user}_${testcase}:/bin/completed
 docker exec -t ${user}_${testcase} chmod 700 /bin/completed
 docker exec -t ${user}_${testcase} chown root:root /bin/completed
-docker exec -it ${user}_${testcase} mkdir /var/log/trade-app >/dev/null 2>&1
-docker exec -it ${user}_${testcase} touch /var/log/trade-app/server.stdout /var/log/trade-app/server.stderr /var/log/trade-app/injector.stdout /var/log/trade-app/injector.stderr
-docker exec -it ${user}_${testcase} chmod 507 /var/log/trade-app
-docker exec -it ${user}_${testcase} bash -c 'chmod 004 /var/log/trade-app/*'
-docker exec -it ${user}_${testcase} bash -c '/usr/sbin/service trade-app stop 2>/dev/null'
-docker exec -it ${user}_${testcase} bash -c '/usr/sbin/service trade-app start 2>/dev/null'
+docker exec -t ${user}_${testcase} mysql -vvv -h mysql.server -u trades -ptrades trades -e 'SET FOREIGN_KEY_CHECKS=0;
+DROP INDEX transid ON Trades;
+DROP INDEX stock ON Trades;
+-- ALTER TABLE Trades DROP PRIMARY KEY;
+DELIMITER $$
+CREATE TRIGGER dupTrade BEFORE INSERT ON Trades
+FOR EACH ROW
+BEGIN
+SET FOREIGN_KEY_CHECKS=0;
+#set @maxid=(select max(id) from Trades);
+IF (NEW.id IS NOT NULL)
+THEN
+	SET
+	CREATE TEMPORARY TABLE tmpTrades SELECT * FROM Trades WHERE id=NEW.id;
+	INSERT INTO Trades (transid,stock,ptime,price,volume,buysell,state,stime)
+	SELECT transid,stock,ptime,price,volume,buysell,state,stime FROM tmpTrades;
+	DROP TEMPORARY TABLE tmpTrades;
+END IF;
+SET FOREIGN_KEY_CHECKS=1;
+END $$
+'
 
 echo "Using the following ports;"
 echo "SSH = ${ssh}"

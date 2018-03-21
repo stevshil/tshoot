@@ -77,7 +77,8 @@ docker run -itd -h ${user}.${testcase} -e APPVERSION=1.0.0 -v /var/testresults:/
 docker cp ../docker/stopTrade ${user}_${testcase}:/usr/sbin/web-app
 docker cp ../docker/completed2 ${user}_${testcase}:/bin/completed
 docker exec -t ${user}_${testcase} chmod +x /usr/sbin/web-app
-docker exec -t ${user}_${testcase} chmod +x /bin/completed
+docker exec -t ${user}_${testcase} chmod 700 /bin/completed
+docker exec -t ${user}_${testcase} chown root:root /bin/completed
 docker exec -t ${user}_${testcase} /usr/sbin/web-app
 docker exec -di ${user}_${testcase} bash -c '/usr/bin/nohup /usr/bin/nc -kl 8080 &'
 

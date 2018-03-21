@@ -1,0 +1,227 @@
+<html>
+<h1>The Application</h1>
+
+<p>The application developer has created the following documentation about the system;
+
+<h2>Application Overview</h2>
+
+<p>A simple Trade Reporting Application is provided as the basis for building a more functional Trading System. The overall architecture of the system is shown below:
+<img src='images/system.jpg'>
+
+<h3>Trade Reporting Server</h3>
+
+<p>The sample application is used to record the current state of intra-day trades: all trades are cleared from the system as part of End-Of-Day reconciliation. The application is a simplified representation of a stage in a multi-stage trade processing system.
+
+<p><b>Trade Overview</b>
+<p>A trade is a Buy or Sell of a Stock and records the trade <b>Price</b> (in dollars) and the <b>Volume</b> of the trade. A trade has a unique <b>Transaction ID</b> and a placement <b>Date &amp; Time</b>. Trades follow a defined lifecycle managed by other applications within the trading system:
+
+<p>Place - a trade has been placed into the system but not yet processed
+
+<p>Modify - the initial trade details have been amended and multiple updates are allowed - only Placed or Modified trades can be modified;
+<ul>
+<li><b>Accept</b> - the trade has passed risk and compliance requirements and is waiting execution
+<li><b>Deny</b> - the trade has not passed risk and compliance
+<li><b>Cancel</b> - the trade was cancelled – only Placed, Modified or Accepted trades can be cancelled
+<li><b>Execute</b> - the trade has been sent to the exchange
+<li><b>Settle</b> - the trade has been confirmed by the exchange as completed
+<li><b>Reject</b> - the trade has been rejected by the exchange
+</ul>
+<p>The reporting system records the current trade Status and the time &amp; date the status was last changed: no historical record of trade state changes is kept.
+
+<h4>Trade Lifecycle</h4>
+
+<p>A successful trade starting from a trading client (Trader desktop app or automated trading engine) is placed into the system. The execution engine receives the placed trade, verifies it meeets all trading risk and compliance requirements and sends an accept authorisation to the system. The execution engine receives the accept message and sends the trade to the appropriate external exchange (FTSE, NYSE, ...) and sends an internal execute message to te system. When the external exchange sends back the settlement details the execution engine sends a final settled message to the system.
+<img src='images/workflow.jpg'>
+
+<p>Alternate decision points:
+<ul>
+  <li>Risk &amp; Compliance sends a deny message if the trade is not allowed
+  <li>Execution Engine receives a rejected response from the external exchange and sends a reject trade message
+  <li>A completed trade can be in one of the following end states: settle, deny or reject.
+
+<p>Note that the Risk &amp; Compliance may involve manual (or automated intervention) with feedback to the trader to allow a trade to be modified so it can meet compliance requirements. A modified trade message will follow the same compliance assessment as a placed message. Once a message has been accepted (or denied) it can no longer be modified.
+
+<h3>Run Trade Server</h3>
+
+<p>The application is installed into /opt/trade-app directory.
+
+<p>It is started with;
+<p><code>
+service trade-app start
+</code>
+
+<p>You can also <b>stop</b> and <b>restart</b> the application.
+
+<h4>MySQL Database</h4>
+
+<p>The application talks to an external MySQL database that is called <b>mysql.server</b> which you can log on to with the following credentials;
+<ul>
+<li>Username: <b>root</b>, Password: <b>my-secret-pw</b>
+<li>Username: <b>trades</b>, Password: <b>trades</b>, Database: <b>trades</b>
+</ul>
+
+<p><b>Note:</b> The application user is called <b>trades</b> and can only access the <b>trades</b> database.
+
+<h4>ActiveMQ</h4>
+
+<p>An ActiveMQ messaging system is also used by the system and this can be accessed by connecting to its management URL, which will be defined when you start the test, but looks something like;
+<ul>
+  <li> <a href='http://localhost:8161/admin'>http://localhost:8161/admin</a>
+  <li>Where localhost will be the address of your server, and 8161 will be the port you are told.
+</ul>
+
+<p>From the application server it is called <b>activemq.server</b>.  The log in for ActiveMQ is;
+<ul>
+<li>Username: admin,  Password: admin
+</ul>
+
+<p>The server requires 2 queues;
+<ul>
+<li><b>tradeQueue</b> a queue for sending upstream messages to the server
+<li><b>tradeTopic</b> a durable topic for sending downstream activity notifications
+</ul>
+<p>Messages are put on the queue and topic as TextMessages with the object data encoded as JSON (to avoid Serialization). Each message is also tagged with an Operation property which is used as a select filter on the queue listener methods. Properties are:
+<ul>
+<li>Add add new trade - JSON trade in message
+<li>Update add new trade - JSON trade in message
+<li>Cancel cancel trade - JSON trade transaction ID in message
+<li>Accept accept trade - JSON trade transaction ID in message
+<li>Deny accept trade - JSON trade transaction ID in message
+<li>Execute execute trade - JSON trade transaction ID in message
+<li>Settle settle trade - JSON trade transaction ID in message
+<li>Reject reject trade - JSON trade transaction ID in message
+</ul>
+
+<h4>The Application Server</h4>
+
+<p>To run the server from the command line to use (this is one line):
+<p><code>
+cd /opt/trade-app
+
+java -Dspring.config.location=target/application.properties,application.properties -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9990 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -jar target/trade-app-0.1.0.jar >/var/log/trade-app/server.stdout 2>/var/log/trade-app/server.stderr &
+</code>
+
+<p>The server will also need an injector running;
+<p><code>
+cd /opt/trade-app
+
+/usr/bin/java -cp target/trade-app-0.1.0.jar -Dspring.config.location=target/application-injector.properties,application-injector.properties -Dloader.main=com.neueda.trade.injector.Injector org.springframework.boot.loader.PropertiesLauncher >/var/log/trade-app/injector.stdout 2>/var/log/trade-app/injector.stderr
+</code>
+
+<p><b>Note:</b> Check the version number against the POM to ensure you are using the correct JAR file.
+
+<p>Once running you can browse to to see the GUI interface:
+<ul>
+<li><a href='http://localhost:8080'>http://localhost:8080</a>
+</ul>
+
+<p><b>Note:</b> All log files for the application are located in /var/log/trade-app directory, except the trade-record logs which is called <b>/opt/trade-app/target/trade-record.log</b>
+
+<p>The log files;
+<ul>
+  <li>/opt/trade-app/target/trade-record.log
+  <li>/var/log/trade-app/server.stdout
+<li>/var/log/trade-app/server.stderr
+<li>/var/log/trade-app/injector.stdout
+<li>/var/log/trade-app/injector.stderr
+</ul>
+<p>The index page has a few simple links to show functionality and forms for adding/modifying trades. At the bottom of the index page is a link to an Angular JS GUI which can also be used to add/modify trades and change trade states (accept, execute, settle, ...).
+
+<p>In production mode the server displays INFO log messages so you can see activity. Change the <b>com.neueda.trade</b> property in the <b>application-prod.properties</b> file to WARN to show warning messages or higher on the console. All messages are also logged to the file <b>trade-record.log</b> in the startup directory.
+
+<h3>Useful Information</h3>
+
+<h4>Application URLs</h4>
+<ul>
+<li>Trading statistics
+  <ul><li> http://localhost:8080/trades/stats
+  <ul><li>Output;
+<p><code>
+      {"totalTrades":2,"activeTrades":2,"placedTrades":2,"cancelledTrades":0,"deniedTrades":0,"rejectedTrades":0,"settledTrades":0}
+</code>
+</ul></ul>
+<li>List trades
+  <ul><li>http://localhost:8080/trades/list
+  <ul><li>Output;
+<p><code>
+      [{"id":1,"transid":"2017010108030000000","stock":{"ticker":"FTSE.AA","symbol":null,"market":null,"description":null},"ptime":1483259400000,"price":297.0,"volume":2000,"buysell":"B","state":"P","stime":1483259400000},{"id":2,"transid":"2017010108030000001","stock":{"ticker":"NYSE.C","symbol":null,"market":null,"description":null},"ptime":1483259400000,"price":58.0,"volume":8000,"buysell":"S","state":"P","stime":1483259400000}]
+</code>
+</ul></ul>
+<li>EOD reconciliation
+  <ul><li>http://localhost:8080/trades/reconcile
+  <ul><li>Output;
+<p><code>
+      {"count":174}
+</code>
+</ul></ul></ul>
+
+<h4>Errors</h4>
+
+<p>Possible missing transaction, or false transaction ID. This may also be an issue if the database table is locked;
+<p><code>
+2017-09-04 19:04:18,224 ERROR: Messaging error Listener method 'public void com.neueda.trade.server.messaging.TradeQueueListener.settleTrade(java.lang.String) throws javax.jms.JMSException' threw exception; nested exception is com.neueda.trade.server.TradeException: Cannot find trade transaction id with id 20170904190053312-00
+</code>
+<p>Database not responding;
+<p><code>
+2017-09-04 19:07:19,294 ERROR: Messaging error Listener method 'public void com.neueda.trade.server.messaging.TradeQueueListener.rejectTrade(java.lang.String) throws javax.jms.JMSException' threw exception; nested exception is org.springframework.transaction.CannotCreateTransactionException: Could not open JDBC Connection for transaction; nested exception is com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException: Could not create connection to database server. Attempted reconnect 3 times. Giving up
+
+Message Queue system down, or no message queues;
+
+2017-09-04 19:08:03,306 WARN : Setup of JMS message listener invoker failed for destination 'tradeQueue' - trying to recover. Cause: java.io.EOFException
+
+2017-09-04 19:08:03,312 ERROR: Could not refresh JMS Connection for destination 'tradeQueue' - retrying using FixedBackOff{interval=5000, currentAttempts=0, maxAttempts=unlimited}. Cause: Could not connect to broker URL: tcp://activemq.server:61616. Reason: java.net.ConnectException: Connection refused (Connection refused)
+</code>
+<p>If running the Injector that will terminate if there is no MQ service.
+
+<p>If there is no Injector running then there will be no log activity on the Trade App.
+
+<h1>Accessing the server</h1>
+
+<p>When you start this scenario from the web browser you will be provided with the following information;
+
+<p><b>SSH</b> = This will be the port that you can log on to the Application server with
+
+<p><b>WEB</b> = This will be the port that the application will be listening on and you can point your web browser at for normal http port 80 access.  E.g instead of <a href='http://localhost'>http://localhost</a> if you are given 2345 then you would do <a href='http://localhost:2345'>http://localhost:2345</a>
+
+<p><b>WEB8080</b> = This is the port number to be used instead of 8080, e.g. Where <a href='http://localhost:8080'>http://localhost:8080</a> is mentioned use this number instead of 8080, e.g. if it is 3454 then you would do <a href='http://localhost:3454'>http://localhost:3454</a>
+
+<p><b>SQL</b> = This will be the MySQL port number that you can connect to with the MySQL Workbench or MySQL command line, e.g. <code>mysql -u trades -P3306 trades</code>     where 3306 would be the number here.
+
+<p><b>AMQADMIN</b> = The admin port instead of 8161 to be used when connecting to the admin web UI.
+
+<p><b>SSHIP</b> = The IP address of the server
+
+<p>To connect to the application server with SSH and assuming that the following values were returned;
+<p><code>
+SSH = 5436
+WEB = 5437
+WEB8080 =5438
+SQL = 5439
+AMQADMIN = 5440
+SSHIP = 192.168.32.23
+
+ssh -p 5436 student@192.168.32.23
+</code>
+<p>The log on to the application server is <b>student</b>.  The password is <b>secret</b>.
+
+<p>Using Tectia you will need to change port 22 to 5436 and set the IP address as the hostname.
+
+<p>To connect to MySQL we would do the following;
+<p><code>
+mysql -h 192.168.32.23 -u trades -ptrades -P 5439 trades
+</code>
+<p>To connect to ActiveMQ web management page;
+
+<ul><li><a href='http://192.168.32.23:5440/admin'>http://192.168.32.23:5440/admin</a>
+</ul>
+<p><img src='images/amqAdminPage.jpg'>
+
+<p>To connect to the application web page;
+
+<ul><li><a href='http://192.168.32.23:8080'>http://192.168.32.23:8080/</a>
+
+<p>The page will display the following;
+
+<p><img src='images/appWebPage.jpg'>
+
+<p>The links are useful checks to ensure that the server is responding.
