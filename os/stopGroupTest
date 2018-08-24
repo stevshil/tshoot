@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cd /vagrant/os
+
+if (( $# < 1 ))
+then
+	echo "$0 <testNumber>"
+	exit 1
+fi
+
+for container in $(docker ps -a | grep test$1 | awk '{print $NF}')
+do
+	docker rm -f $container
+done

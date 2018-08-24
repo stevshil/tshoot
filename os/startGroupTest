@@ -1,0 +1,18 @@
+#!/bin/bash
+
+cd /vagrant/os
+
+if (( $# < 2 ))
+then
+        echo "$0 <testNumber> <numberOfGroups>"
+        exit 1
+fi
+
+counter=1
+while (( $counter <= $2 ))
+do
+        ./startTest Team${counter} $1 eth0
+        ./startTest Team${counter} $1 eth0
+        ./update_test3
+        (( counter=counter+1 ))
+done

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#Update the /etc/suders.d/student
+
+for container in $(docker ps -a  | tail -n +2 | awk '{print $NF}')
+do
+  if echo "$container" | egrep 'mysql|activemq'
+	docker cp  ../docker/student_sudoers $container:/etc/sudoers.d/student
+	docker exec -it $container /usr/bin/chown root:root /etc/sudoers.d/student
+  docker exec -it $container /usr/bin/yum -y install losf
+done
