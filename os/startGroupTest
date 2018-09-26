@@ -8,10 +8,13 @@ then
         exit 1
 fi
 
+# Start the OK one
+./startTest good 0 eth0
+./update_test3
+
 counter=1
 while (( $counter <= $2 ))
 do
-        ./startTest Team${counter} $1 eth0
         ./startTest Team${counter} $1 eth0
         ./update_test3
         (( counter=counter+1 ))
