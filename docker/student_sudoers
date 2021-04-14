@@ -19,3 +19,4 @@ student ALL=(ALL) NOPASSWD: /bin/chown student\:student injector.std*
 student ALL=(ALL) NOPASSWD: /bin/chown student\:student /var/log/trade-app/injector.std*
 student ALL=(ALL) NOPASSWD: /usr/bin/pkill nc
 student ALL=(ALL) NOPASSWD: /usr/sbin/lsof
+student ALL=(ALL) NOPASSWD: /bin/netstat
