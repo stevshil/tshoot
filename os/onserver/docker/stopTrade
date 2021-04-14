@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Stop the trade app from running
+/usr/bin/kill $(ps -ef | grep trade | awk '{print $2}') >/dev/null 2>&1

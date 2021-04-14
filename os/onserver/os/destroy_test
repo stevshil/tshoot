@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Script to remove the test
+# Author: Steve Shilling
+# 19th Jan 2018
+
+if (( $# < 2 ))
+then
+  echo "SYNTAX: $0 username testname" 1>&2
+  exit 1
+fi
+
+user=$1
+testname=$2
+
+# Destroy all the containers for the test - will delete everything
+docker rm -f $(docker ps -a  | awk '{print $NF}' | grep ${user}_${testname})

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Destroy the test containers
+# Author: Steve Shilling
+# Date: 18th Jan 2018
+
+for container in $(docker ps | awk '{print $NF}' | tail -n +2 | grep -v dockreg)
+do
+   docker rm -f $container
+done

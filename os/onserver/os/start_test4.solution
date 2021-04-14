@@ -1,0 +1,33 @@
+# the problem is the trigger has an error.
+# to fix the error you can execute the following
+
+SOLUTION 1. CHANGE THE TRIGGER
+# 1. Connect to mysql
+mysql -h mysql.server -u trades -ptrades trades
+# 2. Now you can see trigger code
+SHOW CREATE TRIGGER trades.updTrade;
+
+# 3. Now you can delete the trigger code because the tradeHist table is wrong.
+# Its real name is TradeHist
+DROP TRIGGER trades.updTrade;
+
+# 4. How you can define the correct trigger code
+DELIMITER $$
+CREATE TRIGGER updTrade AFTER UPDATE ON Trades
+FOR EACH ROW
+BEGIN
+   INSERT INTO TradesHist (transid,stock,ptime,price,volume,buysell,state,stime,utime)
+          VALUES (OLD.transid,OLD.stock,OLD.ptime,OLD.price,OLD.volume,OLD.buysell,OLD.state,OLD.stime,now());
+END $$
+
+# 5. DONE
+
+SOLUTION 2. CHANGE THE TABLE NAME
+# 1. Connect to mysql
+mysql -h mysql.server -u trades -ptrades trades
+
+#2. Create the table with the name the trigger is using
+CREATE TABLE TradesHist LIKE tradesTable;
+
+#3. Now you can destroy the original table
+DROP TABLE tradesTable;

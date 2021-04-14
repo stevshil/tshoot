@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Wrapper script for Web front end to start any test
+# Arguments = Username TestNumber
+
+# Author: Steve Shilling
+# Date: 9th March 2018
+
+nicName=$(grep NICNAME tshoot.conf | awk -F'=' '{print $2}')
+echo ./start_test${2} $1 test${2} ${nicName}
+exec ./start_test${2} $1 test${2} ${nicName}

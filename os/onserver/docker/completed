@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Script that has to run as root via sudo for student so they can't see what is marked
+# Created by: Steve Shilling
+# Date: 19 March 2018
+
+# Test 
+if grep Completed /var/log/$(hostname)/testcount 2>/dev/null
+then
+  echo "You have already completed this test"
+  exit 0
+fi
+
+if [[ -e /var/log/$(hostname)/testcount ]]
+then
+  testcount=$(cat /var/log/$(hostname)/testcount)
+else
+  if [[ ! -d /var/log/$(hostname) ]]
+  then
+    mkdir -p /var/log/$(hostname)
+    chown root:root /var/log/$(hostname)
+  fi
+  testcount=0
+fi
+
+((testcount=testcount + 1))
+echo $testcount >/var/log/$(hostname)/testcount
+chmod 600 /var/log/$(hostname)/testcount
+chown root:root /var/log/$(hostname)/testcount
+
+if ping -c 1 mysql.server >/dev/null 2>&1
+then
+  echo "Congratulations you have solved the problem"
+  echo "Completed" >>/var/log/$(hostname)/testcount
+  cp -r /var/log/$(hostname) /var/testresults
+  cp -r /var/.user /var/testresults/$(hostname)/log
+  cd /var/testresults/$(hostname)/log
+  for x in .[!.]*
+  do
+    newname=$(echo "$x" | sed 's/^.//')
+    mv "$x" "$newname"
+  done
+  exit 0
+else
+  echo "The problem still exists"
+  exit 1
+fi

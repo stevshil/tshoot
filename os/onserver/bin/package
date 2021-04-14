@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cd ..
+tar zcvf tshoot-citi.tgz tshoot --exclude=tshoot/.git --exclude=tshoot/docker/tradeapp --exclude=tshoot/TODO --exclude=tshoot/registry --exclude=tshoot/.vagrant --exclude=tshoot/docker/old --exclude=tshoot/tshoot-citi.tgz
